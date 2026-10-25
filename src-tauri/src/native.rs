@@ -61,7 +61,7 @@ pub fn apply_capture_protection(app: &AppHandle) -> Result<u32, String> {
         if affinity != WDA_EXCLUDEFROMCAPTURE {
             return Err(format!("Display affinity tidak aman: 0x{affinity:08x}."));
         }
-        return Ok(affinity);
+        Ok(affinity)
     }
 
     #[cfg(not(target_os = "windows"))]

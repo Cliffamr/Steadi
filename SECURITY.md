@@ -4,8 +4,8 @@
 
 | Version | Supported |
 |---------|-----------|
-| 0.0.4   | Yes       |
-| < 0.0.4 | No        |
+| 0.1.x   | Yes       |
+| < 0.1.0 | No        |
 
 ## Reporting a Vulnerability
 
@@ -36,9 +36,9 @@ We consider security research conducted in good faith to be authorized. We will 
 
 ## Scope
 
-Steadi runs entirely on-device with zero network calls. The primary security surface areas are:
+Veil Browser runs on-device. Web pages use isolated child WebViews and receive no Tauri capability or IPC access. The primary security surface areas are:
 
-- **Filesystem access**: script storage and settings persistence
-- **IPC between windows**: Tauri event system and invoke commands
-- **Capability scoping**: per-window Tauri permissions
-- **Native API usage**: `objc2` on macOS, Windows API calls
+- **Remote-page isolation**: external child WebViews receive no Tauri capability or filesystem API
+- **IPC boundary**: invoke commands are allowlisted only for the trusted local `main` WebView
+- **Navigation policy**: non-HTTPS URLs, popups, downloads, and sensitive permissions are denied
+- **Native API usage**: Windows API calls provide capture exclusion and opacity

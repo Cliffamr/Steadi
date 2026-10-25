@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-browser-resize-pages"
+description = "Enables the browser_resize_pages command without any pre-configured scope."
+commands.allow = ["browser_resize_pages"]
+
+[[permission]]
+identifier = "deny-browser-resize-pages"
+description = "Denies the browser_resize_pages command without any pre-configured scope."
+commands.deny = ["browser_resize_pages"]

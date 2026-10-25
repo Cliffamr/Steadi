@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-browser-sleep-tab"
+description = "Enables the browser_sleep_tab command without any pre-configured scope."
+commands.allow = ["browser_sleep_tab"]
+
+[[permission]]
+identifier = "deny-browser-sleep-tab"
+description = "Denies the browser_sleep_tab command without any pre-configured scope."
+commands.deny = ["browser_sleep_tab"]

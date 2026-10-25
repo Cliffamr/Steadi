@@ -1,29 +1,27 @@
 [package]
-name = "steadi"
-version = "0.0.4"
-description = "Cross-platform invisible teleprompter"
-authors = ["Siddharth Khattar"]
+name = "veil-browser"
+version = "0.1.0"
+description = "Windows private browser overlay for screen sharing"
+authors = ["Arif Maulana Rokhman"]
 license = "MIT"
-repository = "https://github.com/Siddharth-Khattar/Steadi"
+repository = "https://github.com/Cliffamr/Steadi"
+homepage = "https://github.com/Cliffamr/Steadi"
+readme = "../README.md"
+keywords = ["browser", "overlay", "privacy", "windows", "webview2"]
+categories = ["gui", "web-programming"]
 edition = "2021"
 
 [lib]
-name = "steadi_lib"
+name = "veil_browser"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["macos-private-api"] }
+tauri = { version = "2.12.5", features = ["unstable"] }
 tauri-plugin-global-shortcut = "2"
-tauri-plugin-fs = "2"
-tauri-plugin-store = "2"
-anyhow = "1"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
 
-[target.'cfg(target_os = "macos")'.dependencies]
-objc2-app-kit = "0.3"
-objc2-quartz-core = "0.3"
-objc2-foundation = "0.3"
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }

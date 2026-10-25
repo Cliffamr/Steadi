@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-browser-home"
+description = "Enables the browser_home command without any pre-configured scope."
+commands.allow = ["browser_home"]
+
+[[permission]]
+identifier = "deny-browser-home"
+description = "Denies the browser_home command without any pre-configured scope."
+commands.deny = ["browser_home"]

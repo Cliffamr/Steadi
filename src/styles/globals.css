@@ -1,28 +1,126 @@
 @import "tailwindcss";
 
-html,
-body,
-#root {
-  height: 100%;
-}
-
-html,
-body {
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f5f2ec;
   background: transparent;
-  margin: 0;
-  padding: 0;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { width: 100%; height: 100%; }
+html, body { margin: 0; overflow: hidden; background: transparent; }
+button, input { font: inherit; }
+button { color: inherit; }
+
+.app-shell {
+  min-width: 680px;
+  min-height: 420px;
+  height: 100%;
+  background: #151515;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 13px;
   overflow: hidden;
-  user-select: none;
-  -webkit-user-select: none;
+  position: relative;
 }
 
-.cm-editor,
-.cm-editor * {
-  user-select: text;
-  -webkit-user-select: text;
+.browser-chrome {
+  height: 116px;
+  background: linear-gradient(180deg, #242323 0%, #1b1b1b 100%);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  position: relative;
+  z-index: 10;
 }
 
-/* Hide scrollbar in teleprompter */
-.teleprompter-scroll::-webkit-scrollbar {
-  display: none;
+.tabs { height: 48px; display: flex; align-items: flex-end; gap: 4px; padding: 8px 10px 0; }
+.tab {
+  width: min(220px, 18vw);
+  min-width: 112px;
+  height: 36px;
+  border: 0;
+  border-radius: 9px 9px 0 0;
+  background: #2d2c2c;
+  color: #aaa6a0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  cursor: pointer;
+  overflow: hidden;
+}
+.tab.active { background: #171717; color: #f8f5ef; }
+.tab > span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; text-align: left; }
+.tab-status { width: 10px; color: #d4a45f; font-size: 12px; }
+.tab-close { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; }
+.tab-close:hover { background: rgba(255,255,255,.1); }
+.drag-region { flex: 1; align-self: stretch; }
+
+.toolbar { display: flex; align-items: center; gap: 7px; padding: 9px 10px 10px; }
+.icon-button, .text-button, .shield {
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.icon-button { width: 34px; height: 34px; font-size: 22px; display: grid; place-items: center; color: #b6b1aa; }
+.icon-button:hover, .text-button:hover { background: rgba(255,255,255,.07); color: white; }
+.icon-button:disabled { opacity: .28; cursor: not-allowed; }
+.add-tab { align-self: center; margin-bottom: 1px; }
+.reload { font-size: 19px; }
+.menu-button { font-size: 15px; letter-spacing: 2px; }
+
+.address-wrap {
+  height: 38px;
+  flex: 1;
+  max-width: 820px;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  background: #0f0f0f;
+  border: 1px solid #353331;
+  border-radius: 9px;
+}
+.address-wrap:focus-within { border-color: #b98546; box-shadow: 0 0 0 2px rgba(185,133,70,.15); }
+.lock { color: #9f7f58; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+.address-wrap input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: #f5f2ec; user-select: text; }
+
+.opacity-control { width: 118px; height: 38px; display: flex; align-items: center; gap: 7px; padding: 0 8px; color: #a9a49d; font-size: 11px; }
+.opacity-control input { width: 72px; accent-color: #b98546; }
+.text-button { height: 34px; padding: 0 11px; color: #aaa6a0; font-size: 12px; white-space: nowrap; }
+.text-button.active { color: #f0c488; border-color: #8f6737; background: rgba(185,133,70,.13); }
+
+.shield { align-self: center; height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 7px; color: #b9b4ac; font-size: 11px; border-color: #45413d; }
+.shield.verified { color: #b9d5ba; border-color: #4c7351; background: rgba(63,111,70,.18); }
+.shield-mark { width: 10px; height: 12px; display: block; background: currentColor; clip-path: polygon(50% 0, 100% 18%, 87% 76%, 50% 100%, 13% 76%, 0 18%); }
+.error-bar { position: absolute; left: 12px; right: 12px; top: 112px; padding: 7px 10px; background: #692f2b; border: 1px solid #a4534b; border-radius: 7px; color: #ffe6e2; font-size: 12px; z-index: 30; }
+
+.empty-state { height: calc(100% - 116px); display: grid; place-content: center; justify-items: center; color: #b8b2a9; }
+.empty-state h1 { margin: 15px 0 4px; color: #f7f3ed; font-size: 24px; }
+.empty-state p { margin: 0 0 22px; }
+.brand-mark { width: 52px; height: 52px; border: 1px solid #8d683e; border-radius: 14px; display: grid; place-items: center; color: #d6a969; font: 600 24px Georgia, serif; }
+.primary-button { border: 0; border-radius: 8px; background: #b98546; color: #18120c; font-weight: 700; padding: 10px 16px; cursor: pointer; }
+.primary-button:hover { background: #d09b58; }
+.primary-button.full { width: 100%; margin-top: 15px; }
+
+.click-banner { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 50; padding: 9px 14px; border-radius: 8px; background: rgba(21,21,21,.94); border: 1px solid #8f6737; color: #e7c18d; font-size: 12px; pointer-events: none; }
+.privacy-panel { position: absolute; z-index: 40; top: 108px; right: 10px; width: 340px; max-height: calc(100% - 120px); overflow: auto; padding: 18px; background: #1b1a19; border: 1px solid #49443e; border-radius: 12px; box-shadow: 0 22px 70px rgba(0,0,0,.45); }
+.panel-heading { display: flex; align-items: start; justify-content: space-between; }
+.panel-heading h2 { margin: 3px 0 0; font-size: 18px; }
+.eyebrow { margin: 0; color: #b98546; font-size: 10px; letter-spacing: .14em; }
+.status-detail, .warning-copy { color: #a9a49d; font-size: 12px; line-height: 1.5; }
+dl { margin: 15px 0; border-top: 1px solid #35312d; }
+dl div { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #35312d; font-size: 12px; }
+dt { color: #8f8982; } dd { margin: 0; }
+.check-title { font-size: 12px; font-weight: 700; }
+.check-row { display: flex; align-items: center; gap: 9px; padding: 5px 0; color: #d5d0c9; font-size: 13px; }
+.check-row input { accent-color: #b98546; }
+
+@media (max-width: 900px) {
+  .opacity-control { width: 82px; }
+  .opacity-control span { display: none; }
+  .text-button { width: 36px; overflow: hidden; color: transparent; position: relative; }
+  .text-button::after { content: "CT"; color: #aaa6a0; position: absolute; inset: 0; display: grid; place-items: center; }
+  .shield { font-size: 0; width: 34px; justify-content: center; padding: 0; }
 }

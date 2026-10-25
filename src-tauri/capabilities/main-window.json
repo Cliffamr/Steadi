@@ -1,30 +1,24 @@
 {
+  "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-capability",
-  "description": "Permissions for the main control window",
-  "windows": ["main"],
+  "description": "Trusted local browser chrome only; remote page webviews receive no capability.",
+  "local": true,
+  "webviews": ["main"],
   "permissions": [
     "core:default",
-    "global-shortcut:allow-register",
-    "global-shortcut:allow-unregister",
-    "global-shortcut:allow-is-registered",
-    "fs:default",
-    "fs:allow-read-text-file",
-    "fs:allow-write-text-file",
-    "fs:allow-read-dir",
-    "fs:allow-mkdir",
-    "fs:allow-remove",
-    "fs:allow-rename",
-    "fs:allow-exists",
-    "fs:allow-stat",
-    {
-      "identifier": "fs:scope",
-      "allow": [
-        { "path": "$APPDATA" },
-        { "path": "$APPDATA/**" }
-      ]
-    },
-    "store:default",
     "core:event:default",
-    "core:window:allow-set-focus"
+    "allow-browser-activate-tab",
+    "allow-browser-close-tab",
+    "allow-browser-create-tab",
+    "allow-browser-history",
+    "allow-browser-home",
+    "allow-browser-navigate",
+    "allow-browser-reload",
+    "allow-browser-resize-pages",
+    "allow-browser-sleep-tab",
+    "allow-capture-self-test",
+    "allow-reapply-capture-protection",
+    "allow-set-click-through",
+    "allow-set-window-opacity"
   ]
 }

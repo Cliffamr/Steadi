@@ -1,5 +1,5 @@
-# ABOUTME: Tag-triggered release pipeline that builds for macOS and Windows.
-# ABOUTME: Creates a draft GitHub Release with installers and SHA-256 checksums.
+# ABOUTME: Builds the Windows NSIS installer for version tags.
+# ABOUTME: Publishes an unsigned prerelease plus a SHA-256 checksum.
 
 name: Release
 
@@ -8,166 +8,46 @@ on:
     tags:
       - "v*"
 
-concurrency:
-  group: release-${{ github.ref_name }}
-  cancel-in-progress: false
-
 permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build (${{ matrix.target || matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            args: --target aarch64-apple-darwin
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            args: --target x86_64-apple-darwin
-          - os: windows-latest
-            target: ""
-            args: ""
-    runs-on: ${{ matrix.os }}
+  windows:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: npm
-
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-
+          components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri -> target
-
       - run: npm ci
-
-      # macOS code signing — conditional no-op when secrets are not set
-      - name: Import Apple certificate
-        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
+      - run: npm test
+      - run: npm run check
+      - run: cargo test --manifest-path src-tauri/Cargo.toml
+      - run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+      - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+      - run: npx tauri build --no-sign
+      - name: Create checksum
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem "src-tauri/target/release/bundle/nsis/*.exe" | Select-Object -First 1
+          if (-not $installer) { throw "NSIS installer tidak ditemukan" }
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($installer.Name)" | Set-Content -Encoding ascii checksums-sha256.txt
+          "INSTALLER=$($installer.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Publish unsigned prerelease
+        shell: pwsh
         env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
-          security create-keychain -p actions build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p actions build.keychain
-          security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
-          rm certificate.p12
-
-      - name: Check code signing configuration
-        id: sign-check
-        if: runner.os == 'macOS'
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-        run: |
-          if [ -z "$APPLE_CERTIFICATE" ]; then
-            echo "sign_args=--no-sign" >> "$GITHUB_OUTPUT"
-            echo "::notice::Code signing skipped — APPLE_CERTIFICATE not set"
-          fi
-
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Steadi ${{ github.ref_name }}"
-          releaseDraft: true
-          releaseBody: |
-            ## Install
-
-            **Homebrew** (recommended):
-            ```sh
-            brew tap siddharth-khattar/steadi
-            brew install --cask steadi
-            ```
-
-            **Shell script** (macOS):
-            ```sh
-            curl -fsSL https://raw.githubusercontent.com/Siddharth-Khattar/Steadi/main/install.sh | sh
-            ```
-
-            ## Manual Download
-
-            | Platform | Architecture | File |
-            |----------|-------------|------|
-            | macOS | Apple Silicon (M1/M2/M3/M4) | `Steadi_*_aarch64.dmg` |
-            | macOS | Intel | `Steadi_*_x64.dmg` |
-            | Windows | 64-bit | `Steadi_*_x64-setup.exe` |
-
-            > **Not sure which macOS file?** Click  → **About This Mac**. If the chip says "Apple M…" use the `aarch64` DMG, otherwise use the `x64` DMG.
-
-            > **macOS Gatekeeper note:** Steadi is not yet code-signed. If you download a DMG directly,
-            > macOS may show "app is damaged." Use one of the install methods above, or after a
-            > manual install run: `xattr -cr /Applications/Steadi.app`
-
-            See `checksums-sha256.txt` for file integrity verification.
-          args: ${{ matrix.args }} ${{ steps.sign-check.outputs.sign_args }}
-
-      # Pass installers to the checksums job via Actions artifacts (not gh release download)
-      # to avoid tag-name resolution issues with draft/published release conflicts.
-      - name: Collect installer artifacts
-        shell: bash
-        run: |
-          mkdir -p installers
-          find src-tauri/target -path "*/release/bundle/*" -type f \
-            \( -name "*.dmg" -o -name "*.exe" \) \
-            -exec cp {} installers/ \;
-          echo "Collected installers:"
-          ls -lh installers/
-
-      - name: Upload installer artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: installers-${{ matrix.target || matrix.os }}
-          path: installers/
-          if-no-files-found: error
-          retention-days: 1
-
-  checksums:
-    name: Generate checksums
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download installer artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: installers-*
-          merge-multiple: true
-          path: artifacts
-
-      - name: Generate SHA-256 checksums
-        run: |
-          cd artifacts
-          if ls * 1>/dev/null 2>&1; then
-            sha256sum * > checksums-sha256.txt
-            cat checksums-sha256.txt
-          else
-            echo "No artifacts found to checksum"
-            exit 1
-          fi
-
-      - name: Upload checksums to release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${{ github.ref_name }}" \
-            artifacts/checksums-sha256.txt \
-            --repo "${{ github.repository }}" \
-            --clobber
+          gh release create "$env:GITHUB_REF_NAME" "$env:INSTALLER" checksums-sha256.txt `
+            --repo "$env:GITHUB_REPOSITORY" `
+            --title "Veil Browser $env:GITHUB_REF_NAME" `
+            --prerelease `
+            --notes "Windows-first preview. Installer belum ditandatangani. Verifikasi manual Zoom, Google Meet, Microsoft Teams, Discord, OBS, dan regression recording-first tetap wajib sebelum penggunaan sensitif."

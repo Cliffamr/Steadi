@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-reapply-capture-protection"
+description = "Enables the reapply_capture_protection command without any pre-configured scope."
+commands.allow = ["reapply_capture_protection"]
+
+[[permission]]
+identifier = "deny-reapply-capture-protection"
+description = "Denies the reapply_capture_protection command without any pre-configured scope."
+commands.deny = ["reapply_capture_protection"]
